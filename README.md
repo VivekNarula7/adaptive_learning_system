@@ -1,5 +1,3 @@
-Certainly! Here's a concise project description that you can add to your GitHub repository:
-
 ---
 
 ## Project Description: CodeBuddy
