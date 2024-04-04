@@ -1,5 +1,3 @@
----
-
 ## Project Description: CodeBuddy
 
 **CodeBuddy** is an interactive coding platform inspired by LeetCode, designed to help developers improve their problem-solving skills. It goes beyond traditional question banks by integrating code analysis and personalized recommendations. Whether you're a beginner or an experienced coder, CodeBuddy offers a supportive environment for honing your skills.
