@@ -3,34 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solve Question</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" type="text/javascript" charset="utf-8"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <title>Code Editor</title>
+    <!-- Include CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
+    <!-- Include appropriate CodeMirror theme -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/material.css">
 </head>
 <body>
-    <h1>Solve Programming Question</h1>
-    <div id="editor" style="height: 500px; width: 100%;"></div>
-    <button onclick="runCode()">Run Code</button>
+    <!-- Include CodeMirror JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
+    <!-- Include appropriate CodeMirror mode -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/python/python.min.js"></script>
+    <!-- Initialize CodeMirror -->
+    <textarea id="editor"></textarea>
+    <button id="runBtn">Run Code</button>
+    <div id="output"></div>
     <script>
-        var editor = ace.edit("editor");
-        editor.setTheme("ace/theme/monokai");
-        editor.session.setMode("ace/mode/python"); // Set this to the appropriate programming language
+        var editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+            lineNumbers: true,
+            mode: "python",
+            theme: "material" // Set the theme to Material for better appearance
+        });
 
-        function runCode() {
-            var userCode = editor.getSession().getValue();
-            $.ajax({
-                url: "/run_code",
-                type: "POST",
-                contentType: "application/json",
-                data: JSON.stringify({code: userCode}),
-                success: function(response) {
-                    alert('Output: ' + response.output);
+        document.getElementById('runBtn').addEventListener('click', function() {
+            var code = editor.getValue();
+            fetch('/compile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                error: function(err) {
-                    alert('Error running code');
-                }
-            });
-        }
+                body: 'code=' + encodeURIComponent(code)
+            })
+            .then(response => response.text())
+            .then(output => {
+                document.getElementById('output').innerText = output;
+            })
+            .catch(error => console.error('Error:', error));
+        });
     </script>
 </body>
 </html>

@@ -3,6 +3,8 @@ from adaptive_learning_system import app, db, bcrypt
 from adaptive_learning_system.forms import RegistrationForm, LoginForm, UpdateAccountForm, ProgrammingQuestionForm
 from adaptive_learning_system.models import User, ProgrammingQuestion
 from flask_login import login_user, current_user, logout_user, login_required
+import sys
+from io import StringIO
 
 @app.route("/")
 @app.route("/home")
@@ -89,6 +91,7 @@ def add_question():
         flash("Question added successfully!", "success")
         return redirect(url_for("view_questions"))
     return render_template("add_question.html", title="Add Question", form=form)
+
 @app.route("/view_questions")
 def view_questions():
     questions = ProgrammingQuestion.query.all()
@@ -96,11 +99,15 @@ def view_questions():
 
 @app.route("/run_code", methods=["POST"])
 def run_code():
-    code = request.json['code']
-    # Here you would add the logic to execute the code safely
-    output = execute_code_safely(code)  # Placeholder function
-    return jsonify(output=output)
-
+    try:
+        code = request.json['code']
+        # Execute the code and get the output
+        output = execute_code(code)
+        return jsonify(output=output)
+    except Exception as e:
+        error_message = f"Error executing code: {str(e)}"
+        app.logger.error(error_message)  # Log the exception
+        return jsonify(error=error_message), 500
 
 
 @app.route("/solve_question/<int:question_id>", methods=["GET", "POST"])
@@ -109,9 +116,37 @@ def solve_question(question_id):
     question = ProgrammingQuestion.query.get_or_404(question_id)
 
     if request.method == "POST":
+        # Handle form submission if needed
+        pass
 
-        return render_template("solution_result.html", question=question)
-
-    # Render the solve question page
+    # Render the solve question page with the flaskcode editor
     return render_template("solve_question.html", question=question)
 
+
+@app.route("/submit_solution/<int:question_id>", methods=["POST"])
+def submit_solution(question_id):
+    user_code = request.form.get("user_code")
+    # Process the user's code here
+    # You can evaluate the code, run tests, etc.
+    return redirect(url_for("solve_question", question_id=question_id))
+
+@app.route('/compile', methods=['POST'])
+def compile_code():
+    try:
+        code = request.form['code']
+        
+        # Redirect stdout to capture output
+        sys.stdout = StringIO()
+
+        # Execute the code
+        exec(code)
+
+        # Get the captured output
+        output = sys.stdout.getvalue()
+
+        # Reset stdout
+        sys.stdout = sys.__stdout__
+
+        return output
+    except Exception as e:
+        return f'Error executing code: {str(e)}', 500
