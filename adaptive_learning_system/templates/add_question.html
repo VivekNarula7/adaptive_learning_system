@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Add Question - My LeetCode-Like Platform
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Add Question</h1>
+    <div class="row">
+        <div class="col-md-6">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="form-group">
+                    {{ form.title.label }} {{ form.title(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    {{ form.description.label }} {{ form.description(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    {{ form.difficulty.label }} {{ form.difficulty(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    {{ form.code_snippet.label }} {{ form.code_snippet(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    {{ form.language.label }} {{ form.language(class="form-control") }}
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
