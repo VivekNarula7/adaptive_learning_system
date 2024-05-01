@@ -89,7 +89,29 @@ def add_question():
         flash("Question added successfully!", "success")
         return redirect(url_for("view_questions"))
     return render_template("add_question.html", title="Add Question", form=form)
-@app.route("/questions")
+@app.route("/view_questions")
 def view_questions():
-    questions = Problem.query.all()
+    questions = ProgrammingQuestion.query.all()
     return render_template("view_questions.html", questions=questions)
+
+@app.route("/run_code", methods=["POST"])
+def run_code():
+    code = request.json['code']
+    # Here you would add the logic to execute the code safely
+    output = execute_code_safely(code)  # Placeholder function
+    return jsonify(output=output)
+
+
+
+@app.route("/solve_question/<int:question_id>", methods=["GET", "POST"])
+def solve_question(question_id):
+    # Fetch the programming question from the database
+    question = ProgrammingQuestion.query.get_or_404(question_id)
+
+    if request.method == "POST":
+
+        return render_template("solution_result.html", question=question)
+
+    # Render the solve question page
+    return render_template("solve_question.html", question=question)
+

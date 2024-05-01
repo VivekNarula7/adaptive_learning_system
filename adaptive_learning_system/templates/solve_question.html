@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solve Question</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Solve Programming Question</h1>
+    <div id="editor" style="height: 500px; width: 100%;"></div>
+    <button onclick="runCode()">Run Code</button>
+    <script>
+        var editor = ace.edit("editor");
+        editor.setTheme("ace/theme/monokai");
+        editor.session.setMode("ace/mode/python"); // Set this to the appropriate programming language
+
+        function runCode() {
+            var userCode = editor.getSession().getValue();
+            $.ajax({
+                url: "/run_code",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({code: userCode}),
+                success: function(response) {
+                    alert('Output: ' + response.output);
+                },
+                error: function(err) {
+                    alert('Error running code');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
