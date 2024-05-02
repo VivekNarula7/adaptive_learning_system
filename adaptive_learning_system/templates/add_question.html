@@ -1,5 +1,3 @@
-<!-- add_question.html -->
-
 {% extends "layout.html" %}
 {% block title %}Add Question{% endblock %}
 
@@ -36,48 +34,27 @@
                 <small class="form-text text-danger">{{ error }}</small>
             {% endfor %}
         </div>
+
         <div class="form-group">
-            {{ form.test_case1_input.label(class="form-control-label") }}
-            {{ form.test_case1_input(class="form-control") }}
-            {% for error in form.test_case1_input.errors %}
+            <label class="form-control-label">Test Cases</label>
+            {% for test_case in form.test_cases %}
+            <div>
+                {{ test_case.input_data.label(class="form-control-label") }}
+                {{ test_case.input_data(class="form-control") }}
+                {% for error in test_case.input_data.errors %}
                 <small class="form-text text-danger">{{ error }}</small>
+                {% endfor %}
+            </div>
+            <div>
+                {{ test_case.expected_output.label(class="form-control-label") }}
+                {{ test_case.expected_output(class="form-control") }}
+                {% for error in test_case.expected_output.errors %}
+                <small class="form-text text-danger">{{ error }}</small>
+                {% endfor %}
+            </div>
             {% endfor %}
         </div>
-        <div class="form-group">
-            {{ form.test_case1_output.label(class="form-control-label") }}
-            {{ form.test_case1_output(class="form-control") }}
-            {% for error in form.test_case1_output.errors %}
-                <small class="form-text text-danger">{{ error }}</small>
-            {% endfor %}
-        </div>
-        <div class="form-group">
-            {{ form.test_case2_input.label(class="form-control-label") }}
-            {{ form.test_case2_input(class="form-control") }}
-            {% for error in form.test_case2_input.errors %}
-                <small class="form-text text-danger">{{ error }}</small>
-            {% endfor %}
-        </div>
-        <div class="form-group">
-            {{ form.test_case2_output.label(class="form-control-label") }}
-            {{ form.test_case2_output(class="form-control") }}
-            {% for error in form.test_case2_output.errors %}
-                <small class="form-text text-danger">{{ error }}</small>
-            {% endfor %}
-        </div>
-        <div class="form-group">
-            {{ form.test_case3_input.label(class="form-control-label") }}
-            {{ form.test_case3_input(class="form-control") }}
-            {% for error in form.test_case3_input.errors %}
-                <small class="form-text text-danger">{{ error }}</small>
-            {% endfor %}
-        </div>
-        <div class="form-group">
-            {{ form.test_case3_output.label(class="form-control-label") }}
-            {{ form.test_case3_output(class="form-control") }}
-            {% for error in form.test_case3_output.errors %}
-                <small class="form-text text-danger">{{ error }}</small>
-            {% endfor %}
-        </div>
+
         <button type="submit" class="btn btn-primary">Submit</button>
     </form>
 </div>

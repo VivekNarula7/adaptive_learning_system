@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Generate Code - My LeetCode-Like Platform
+{% endblock %}
+
+{% block content %}
+    <h1>Generate Code</h1>
+    <form method="POST">
+        <label for="code_prompt">Enter code prompt:</label>
+        <textarea name="code_prompt" rows="4" required></textarea>
+        <button type="submit">Generate Code</button>
+    </form>
+{% endblock %}

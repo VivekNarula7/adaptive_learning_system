@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Result - My LeetCode-Like Platform
+{% endblock %}
+
+{% block content %}
+    &lt;h1>Result&lt;/h1>
+    &lt;pre>{{ submission.generated_code }}&lt;/pre>
+    &lt;a href="{{ url_for('home') }}">Back to Home&lt;/a>
+{% endblock %}

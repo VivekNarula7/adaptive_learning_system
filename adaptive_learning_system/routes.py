@@ -1,14 +1,18 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify
 from adaptive_learning_system import app, db, bcrypt
 from adaptive_learning_system.forms import RegistrationForm, LoginForm, UpdateAccountForm, ProgrammingQuestionForm
-from adaptive_learning_system.models import User, ProgrammingQuestion
+from adaptive_learning_system.models import User, ProgrammingQuestion, Submission, GeneratedCode
 from flask_login import login_user, current_user, logout_user, login_required
 import sys
 from io import StringIO
 import subprocess
 import tempfile
 import os
+import requests
+from transformers import pipeline
 
+
+# Initialize OpenAI client with your API key
 @app.route("/")
 @app.route("/home")
 def home():
@@ -72,30 +76,107 @@ def account():
 @login_required
 def add_question():
     form = ProgrammingQuestionForm()
+    question = None  # Initialize question variable outside the if block
     if form.validate_on_submit():
-        question = ProgrammingQuestion(
-            title=form.title.data,
-            description=form.description.data,
-            difficulty=form.difficulty.data,
-            language=form.language.data,
-            user_id=current_user.id,
-            test_case1_input=form.test_case1_input.data,
-            test_case1_output=form.test_case1_output.data,
-            test_case2_input=form.test_case2_input.data,
-            test_case2_output=form.test_case2_output.data,
-            test_case3_input=form.test_case3_input.data,
-            test_case3_output=form.test_case3_output.data
-        )
-        db.session.add(question)
-        db.session.commit()
-        flash("Question added successfully!", "success")
+        # Start a database transaction
+        with db.session.begin_nested():
+            question = ProgrammingQuestion(
+                title=form.title.data,
+                description=form.description.data,
+                difficulty=form.difficulty.data,
+                language=form.language.data,
+            )
+            db.session.add(question)
+            db.session.commit()
+            flash("Question added successfully!", "success")
         return redirect(url_for("view_questions"))
-    return render_template("add_question.html", title="Add Question", form=form)
+    else:
+        # Handle form validation errors
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"Error in {field}: {error}", "danger")
+    return render_template("add_question.html", title="Add Question", form=form, question=question)
 
 @app.route("/view_questions")
 def view_questions():
     questions = ProgrammingQuestion.query.all()
     return render_template("view_questions.html", questions=questions)
+
+@app.route('/submit', methods=['POST'])
+@login_required
+def submit():
+    user_id = current_user.id
+    code = request.form['code']
+    question_id = request.form['question_id']
+
+    # Retrieve the question details
+    question = ProgrammingQuestion.query.get_or_404(question_id)
+
+    # Evaluate code using Starcoder API
+    evaluation_result = evaluate_code(code, question)
+
+    # Store submission in the database
+    submission = Submission(user_id=user_id, question_id=question_id, code=code, evaluation_result=json.dumps(evaluation_result))
+    db.session.add(submission)
+    db.session.commit()
+
+    return redirect(url_for('result', submission_id=submission.id))
+
+
+generator = pipeline('text-generation', model='gpt2', device=-1)
+
+
+@app.route('/analyze_code_transformers', methods=['POST'])
+def analyze_code_transformers():
+    # Get the submission ID from the request
+    submission_id = request.form['submission_id']
+
+    # Retrieve the user's code submission from the database
+    submission = Submission.query.get(submission_id)
+
+    if submission:
+        # Get the user's code and the programming question from the submission
+        user_code = submission.code
+        question = submission.question
+
+        # Concatenate the question and user's code submission
+        prompt = f'Question: {question}\n\nCode:\n{user_code}\nAnswer:'
+
+        # Generate an answer using the pipeline
+        generated_answer = generator(prompt, max_length=100, num_return_sequences=1)[0]['generated_text']
+
+        # Return the generated answer as the analysis result
+        return jsonify({'generated_answer': generated_answer})
+    else:
+        return jsonify({'error': 'Submission not found'}), 404
+
+
+
+
+@app.route('/test_transformer', methods=['GET'])
+def test_transformer():
+    # Define the prompt
+    generator = pipeline('text-generation', model='gpt2', device=-1)
+
+    prompt = "Once upon a time in a far away land,"
+
+    # Generate text using the pipeline
+    generated_text = generator(prompt, max_length=100, num_return_sequences=1)[0]['generated_text']
+
+    # Return the generated text as the response
+    return jsonify({'generated_text': generated_text})
+
+
+@app.route("/solve_question/<int:question_id>", methods=['GET', 'POST'])
+@login_required
+def solve_question(question_id):
+    question = ProgrammingQuestion.query.get_or_404(question_id)
+    if request.method == 'POST':
+        user_code = request.form.get("user_code")
+        # Further processing can be done here
+        return redirect(url_for("some_result_route", question_id=question_id))
+
+    return render_template('solve_question.html', question=question)
 
 @app.route('/compile', methods=['POST'])
 def compile_code():
@@ -114,58 +195,3 @@ def compile_code():
             return f"Error in execution: {output.stderr}"
     except Exception as e:
         return f"Server error: {str(e)}", 500
-
-@app.route('/run_test_cases', methods=['POST'])
-def run_test_cases():
-    data = request.get_json()
-    code = data['code']
-    test_cases = data['test_cases']
-    results = []
-    try:
-        for test in test_cases:
-            output = execute_user_code(code, test['input'])
-            results.append({
-                'input': test['input'],
-                'expected_output': test['expected_output'],
-                'actual_output': output,
-                'pass': output.strip() == test['expected_output'].strip()
-            })
-        return jsonify(results=results)
-    except Exception as e:
-        app.logger.error(f"Failed to execute test cases: {str(e)}")
-        return jsonify(error=str(e)), 500
-
-def execute_user_code(code, input_data):
-    """
-    Execute user submitted code securely and capture the output.
-    """
-    with tempfile.NamedTemporaryFile(mode='w+', delete=False) as f:
-        f.write(code)
-        f.flush()
-        result = subprocess.run(
-            ['python', f.name],
-            input=input_data, capture_output=True, text=True, timeout=5)
-    os.remove(f.name)
-    if result.returncode == 0:
-        return result.stdout
-    else:
-        return f"Execution error: {result.stderr}"
-
-@app.route("/solve_question/<int:question_id>", methods=['GET', 'POST'])
-@login_required
-def solve_question(question_id):
-    question = ProgrammingQuestion.query.get_or_404(question_id)
-    
-    # Fetching test cases as a list of dictionaries
-    test_cases = [
-        {'input': question.test_case1_input, 'output': question.test_case1_output},
-        {'input': question.test_case2_input, 'output': question.test_case2_output},
-        {'input': question.test_case3_input, 'output': question.test_case3_output}
-    ]
-
-    if request.method == 'POST':
-        user_code = request.form.get("user_code")
-        # Further processing can be done here
-        return redirect(url_for("some_result_route", question_id=question_id))
-    
-    return render_template('solve_question.html', question=question, test_cases=test_cases)
