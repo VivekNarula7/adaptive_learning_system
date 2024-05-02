@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, send_from_directory
+from flask import Flask, Blueprint, send_from_directory, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import os
 from flask_bcrypt import Bcrypt

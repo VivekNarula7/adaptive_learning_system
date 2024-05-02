@@ -3,30 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Editor</title>
+    <title>Solve Question</title>
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <!-- Include CodeMirror CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
-    <!-- Include appropriate CodeMirror theme -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/material.css">
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">My LeetCode-Like Platform</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1 class="mb-4">Solve Programming Question</h1>
+        <!-- Display the question -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">{{ question.title }}</h5>
+                <p class="card-text">{{ question.description }}</p>
+                <p class="card-text"><strong>Difficulty:</strong> {{ question.difficulty }}</p>
+            </div>
+        </div>
+
+        <!-- Code editor -->
+        <textarea id="editor" class="form-control mb-3"></textarea>
+        <!-- Buttons -->
+        <div class="mb-3">
+            <button id="runBtn" class="btn btn-primary mr-2">Run Code</button>
+            <button id="testBtn" class="btn btn-secondary">Run Test Cases</button>
+        </div>
+        <!-- Output display -->
+        <div id="output" class="mt-3"></div>
+    </div>
+
+    <script>
+        var testCases = {{ test_cases | tojson | safe }};
+    </script>
+    <!-- Include Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <!-- Include CodeMirror JavaScript -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
     <!-- Include appropriate CodeMirror mode -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/python/python.min.js"></script>
-    <!-- Initialize CodeMirror -->
-    <textarea id="editor"></textarea>
-    <button id="runBtn">Run Code</button>
-    <div id="output"></div>
+    <!-- Initialize CodeMirror and setup other event handlers -->
     <script>
         var editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
             lineNumbers: true,
             mode: "python",
-            theme: "material" // Set the theme to Material for better appearance
+            theme: "default"
         });
 
         document.getElementById('runBtn').addEventListener('click', function() {
             var code = editor.getValue();
+            executeCode(code);
+        });
+
+        document.getElementById('testBtn').addEventListener('click', function() {
+            var code = editor.getValue();
+            executeTestCases(code, testCases);
+        });
+
+        function executeCode(code) {
             fetch('/compile', {
                 method: 'POST',
                 headers: {
@@ -39,7 +91,30 @@
                 document.getElementById('output').innerText = output;
             })
             .catch(error => console.error('Error:', error));
-        });
+        }
+
+        function executeTestCases(code, testCases) {
+            fetch('/run_test_cases', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    code: code,
+                    test_cases: testCases
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('output').innerText = 'Error: ' + data.error;
+                } else {
+                    let results = data.results.map(result => `Input: ${result.input}\nExpected: ${result.expected_output}\nGot: ${result.actual_output}\nPassed: ${result.pass}`).join('\n\n');
+                    document.getElementById('output').innerText = results;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
     </script>
 </body>
 </html>

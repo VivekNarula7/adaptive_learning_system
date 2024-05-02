@@ -58,7 +58,15 @@ class UpdateAccountForm(FlaskForm):
 class ProgrammingQuestionForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
     description = TextAreaField('Description', validators=[DataRequired()])
-    difficulty = SelectField('Difficulty', choices=[('Easy', 'Easy'), ('Medium', 'Medium'), ('Hard', 'Hard')], validators=[DataRequired()])
-    test_cases = TextAreaField('Test Cases', validators=[DataRequired()])
-    language = StringField('Language')  # You can choose to include this field or not
+    difficulty = SelectField('Difficulty', choices=[('Easy', 'Easy'), ('Medium', 'Medium'), ('Hard', 'Hard')])
+    language = SelectField('Language', choices=[('Python', 'Python'), ('Java', 'Java'), ('C++', 'C++')])
+    
+    # Test Cases
+    test_case1_input = StringField('Test Case 1 Input', validators=[DataRequired()])
+    test_case1_output = StringField('Test Case 1 Expected Output', validators=[DataRequired()])
+    test_case2_input = StringField('Test Case 2 Input', validators=[DataRequired()])
+    test_case2_output = StringField('Test Case 2 Expected Output', validators=[DataRequired()])
+    test_case3_input = StringField('Test Case 3 Input', validators=[DataRequired()])
+    test_case3_output = StringField('Test Case 3 Expected Output', validators=[DataRequired()])
+    
     submit = SubmitField('Submit')
