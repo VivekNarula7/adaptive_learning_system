@@ -1,7 +1,7 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify
 from adaptive_learning_system import app, db, bcrypt
 from adaptive_learning_system.forms import RegistrationForm, LoginForm, UpdateAccountForm, ProgrammingQuestionForm
-from adaptive_learning_system.models import User, ProgrammingQuestion, Submission, GeneratedCode
+from adaptive_learning_system.models import User, ProgrammingQuestion
 from flask_login import login_user, current_user, logout_user, login_required
 import sys
 from io import StringIO

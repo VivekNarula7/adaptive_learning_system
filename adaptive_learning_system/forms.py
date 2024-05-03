@@ -55,16 +55,8 @@ class UpdateAccountForm(FlaskForm):
             if user:
                 raise ValidationError('That email is taken. Please choose a different one.')
 
-class TestCaseForm(FlaskForm):
-    input_data = StringField('Input Data', validators=[DataRequired()])
-    expected_output = StringField('Expected Output', validators=[DataRequired()])
-
 class ProgrammingQuestionForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
     description = TextAreaField('Description', validators=[DataRequired()])
     difficulty = SelectField('Difficulty', choices=[('easy', 'Easy'), ('medium', 'Medium'), ('hard', 'Hard')], validators=[DataRequired()])
     language = StringField('Language', validators=[DataRequired()])
-
-class GenerateCodeForm(FlaskForm):
-    code_prompt = StringField('Code Prompt', validators=[DataRequired()])
-    submit = SubmitField('Generate Code')
