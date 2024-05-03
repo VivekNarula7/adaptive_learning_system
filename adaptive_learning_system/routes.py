@@ -182,13 +182,15 @@ def compile_code():
     except Exception as e:
         return f"Server error: {str(e)}", 500
 
+
 def generate_response(prompt_input, email, passwd):
     # Hugging Face Login
     sign = Login(email, passwd)
     cookies = sign.login()
     # Create ChatBot
     chatbot = hugchat.ChatBot(cookies=cookies.get_dict())
-    return chatbot.chat(prompt_input).text
+    response_message = chatbot.chat(prompt_input)
+    return response_message  # Extract text from the message object
 
 @app.route('/evaluate', methods=['POST'])
 @login_required
@@ -198,8 +200,18 @@ def evaluate():
     question_id = request.form['question_id']
     question_description = ProgrammingQuestion.query.get_or_404(question_id)
 
+    # Extract prompt text from the question description
+    prompt_text = question_description.description
+
+    # Combine prompt text with user's code
+    prompt = f"Solve the following question: {prompt_text}\n\n Is the User's code:\n{user_code} correct based on the {prompt_text}. Provide detailed code analysis of the User's code:\n{user_code}"
+
     # Generate LLM response using Hugging Chat
-    chatbot_response = generate_response(question_description, email='viveknarula22@gmail.com', passwd='Vivek*2407')
+    chatbot_response = generate_response(prompt, email='viveknarula22@gmail.com', passwd='Vivek*2407')
+
+    # Here, you can analyze chatbot_response to determine if the user's code is correct or not
+    # For simplicity, let's assume the chatbot_response contains feedback on the code
+    # You can adjust this part based on the actual format of the response from your LLM
 
     # Return the generated conversational response
-    return jsonify({'response': chatbot_response})
+    return str(chatbot_response)
