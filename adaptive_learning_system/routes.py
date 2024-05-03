@@ -10,17 +10,20 @@ import tempfile
 import os
 import requests
 from transformers import pipeline
+from hugchat import hugchat
+from hugchat.login import Login
 
 
-# Initialize OpenAI client with your API key
 @app.route("/")
 @app.route("/home")
 def home():
     return render_template('home.html')
 
+
 @app.route("/about")
 def about():
     return render_template('about.html', title='About')
+
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -35,6 +38,7 @@ def register():
         flash('Your account has been created! You are now able to log in', 'success')
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
+
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -51,10 +55,12 @@ def login():
             flash('Login Unsuccessful. Please check email and password', 'danger')
     return render_template('login.html', title='Login', form=form)
 
+
 @app.route("/logout")
 def logout():
     logout_user()
     return redirect(url_for('home'))
+
 
 @app.route("/account", methods=['GET', 'POST'])
 @login_required
@@ -71,6 +77,7 @@ def account():
         form.email.data = current_user.email
     image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
     return render_template('account.html', title='Account', image_file=image_file, form=form)
+
 
 @app.route("/add_question", methods=["GET", "POST"])
 @login_required
@@ -97,10 +104,12 @@ def add_question():
                 flash(f"Error in {field}: {error}", "danger")
     return render_template("add_question.html", title="Add Question", form=form, question=question)
 
+
 @app.route("/view_questions")
 def view_questions():
     questions = ProgrammingQuestion.query.all()
     return render_template("view_questions.html", questions=questions)
+
 
 @app.route('/submit', methods=['POST'])
 @login_required
@@ -112,45 +121,14 @@ def submit():
     # Retrieve the question details
     question = ProgrammingQuestion.query.get_or_404(question_id)
 
-    # Evaluate code using Starcoder API
-    evaluation_result = evaluate_code(code, question)
+    submission = Submission(user_id=user_id, question_id=question_id, code=code)
 
-    # Store submission in the database
-    submission = Submission(user_id=user_id, question_id=question_id, code=code, evaluation_result=json.dumps(evaluation_result))
+    print(submission)
+
     db.session.add(submission)
     db.session.commit()
 
     return redirect(url_for('result', submission_id=submission.id))
-
-
-generator = pipeline('text-generation', model='gpt2', device=-1)
-
-
-@app.route('/analyze_code_transformers', methods=['POST'])
-def analyze_code_transformers():
-    # Get the submission ID from the request
-    submission_id = request.form['submission_id']
-
-    # Retrieve the user's code submission from the database
-    submission = Submission.query.get(submission_id)
-
-    if submission:
-        # Get the user's code and the programming question from the submission
-        user_code = submission.code
-        question = submission.question
-
-        # Concatenate the question and user's code submission
-        prompt = f'Question: {question}\n\nCode:\n{user_code}\nAnswer:'
-
-        # Generate an answer using the pipeline
-        generated_answer = generator(prompt, max_length=100, num_return_sequences=1)[0]['generated_text']
-
-        # Return the generated answer as the analysis result
-        return jsonify({'generated_answer': generated_answer})
-    else:
-        return jsonify({'error': 'Submission not found'}), 404
-
-
 
 
 @app.route('/test_transformer', methods=['GET'])
@@ -173,10 +151,18 @@ def solve_question(question_id):
     question = ProgrammingQuestion.query.get_or_404(question_id)
     if request.method == 'POST':
         user_code = request.form.get("user_code")
-        # Further processing can be done here
-        return redirect(url_for("some_result_route", question_id=question_id))
+        if user_code:
+            # Store the user's code submission in the database
+            submission = Submission(user_id=current_user.id, question_id=question_id, code=user_code)
+            db.session.add(submission)
+            db.session.commit()
+            flash('Your code has been submitted successfully!', 'success')
+            return redirect(url_for('some_result_route', question_id=question_id))
+        else:
+            flash('No code was submitted.', 'warning')
 
     return render_template('solve_question.html', question=question)
+
 
 @app.route('/compile', methods=['POST'])
 def compile_code():
@@ -195,3 +181,25 @@ def compile_code():
             return f"Error in execution: {output.stderr}"
     except Exception as e:
         return f"Server error: {str(e)}", 500
+
+def generate_response(prompt_input, email, passwd):
+    # Hugging Face Login
+    sign = Login(email, passwd)
+    cookies = sign.login()
+    # Create ChatBot
+    chatbot = hugchat.ChatBot(cookies=cookies.get_dict())
+    return chatbot.chat(prompt_input).text
+
+@app.route('/evaluate', methods=['POST'])
+@login_required
+def evaluate():
+    # Get the user's code submission and the programming question from the request
+    user_code = request.form['code']
+    question_id = request.form['question_id']
+    question_description = ProgrammingQuestion.query.get_or_404(question_id)
+
+    # Generate LLM response using Hugging Chat
+    chatbot_response = generate_response(question_description, email='viveknarula22@gmail.com', passwd='Vivek*2407')
+
+    # Return the generated conversational response
+    return jsonify({'response': chatbot_response})

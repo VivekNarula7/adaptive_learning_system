@@ -42,12 +42,11 @@
         </div>
 
         <!-- Code editor -->
-        <textarea id="editor" class="form-control mb-3">{{ question.code }}</textarea>
+        <textarea id="editor" class="form-control mb-3" name="code">{{ question.code }}</textarea>
+
         <!-- Buttons -->
         <div class="mb-3">
-            <button id="runBtn" class="btn btn-primary mr-2">Run Code</button>
-            <button id="submitBtn" class="btn btn-primary mr-2">Submit Code</button>
-            <button id="evaluateBtn" class="btn btn-success" style="display: none;">Evaluate Code</button>
+            <button id="evaluateBtn" class="btn btn-success">Evaluate Code</button>
         </div>
         <!-- Output display -->
         <div id="output" class="mt-3"></div>
@@ -61,45 +60,9 @@
             theme: 'monokai'
         });
 
-        document.getElementById('runBtn').addEventListener('click', function() {
-            var code = editor.getValue();
-            executeCode(code);
-        });
-
-        document.getElementById('submitBtn').addEventListener('click', function() {
-            var code = editor.getValue();
-            executeCode(code);
-            document.getElementById('submitBtn').style.display = 'none';
-            document.getElementById('evaluateBtn').style.display = 'block';
-        });
-
         document.getElementById('evaluateBtn').addEventListener('click', function() {
             var code = editor.getValue();
             evaluateCode(code, questionId);
-        });
-
-        function executeCode(code) {
-            return fetch('/compile', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: 'code=' + encodeURIComponent(code)
-            })
-            .then(response => response.text())
-            .then(output => {
-                return output;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                return '';
-            });
-        }
-
-        document.getElementById('runBtn').addEventListener('click', function() {
-            var code = editor.getValue();
-            var output = executeCode(code);
-            document.getElementById('output').innerText = output;
         });
 
         function evaluateCode(code, questionId) {
@@ -110,11 +73,11 @@
                 },
                 body: 'code=' + encodeURIComponent(code) + '&question_id=' + questionId
             })
-            .then(response => response.text())
-            .then(output => {
-                document.getElementById('output').innerText = output;
-            })
-            .catch(error => console.error('Error:', error));
+                .then(response => response.text())
+                .then(output => {
+                    document.getElementById('output').innerText = output;
+                })
+                .catch(error => console.error('Error:', error));
         }
     </script>
 </body>

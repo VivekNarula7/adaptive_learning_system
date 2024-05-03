@@ -5,11 +5,17 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, login_user, current_user, logout_user, login_required, UserMixin
 from wtforms.validators import ValidationError
 import requests
+from dotenv import dotenv_values
+from hugchat import hugchat
+from hugchat.login import Login
 
 current_dir = os.path.abspath(os.path.dirname(__file__))
 
 # Create the Flask application instance
 app = Flask(__name__)
+hf_email = 'viveknarula22@gmail.com'
+hf_pass = 'Vivek*2021'
+
 
 # Set the OpenAI API import os
 # Configure Flask settings

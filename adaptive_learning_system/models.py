@@ -29,7 +29,6 @@ class Submission(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     question_id = db.Column(db.Integer, db.ForeignKey('programming_question.id'), nullable=False)
     code = db.Column(db.Text, nullable=False)
-    evaluation_result = db.Column(db.Text)
 
 class GeneratedCode(db.Model):
     id = db.Column(db.Integer, primary_key=True)
