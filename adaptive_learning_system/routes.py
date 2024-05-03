@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 import os
 import requests
-from transformers import pipeline
+# from transformers import pipeline
 from hugchat import hugchat
 from hugchat.login import Login
 
@@ -131,18 +131,18 @@ def submit():
     return redirect(url_for('result', submission_id=submission.id))
 
 
-@app.route('/test_transformer', methods=['GET'])
-def test_transformer():
-    # Define the prompt
-    generator = pipeline('text-generation', model='gpt2', device=-1)
+# @app.route('/test_transformer', methods=['GET'])
+# def test_transformer():
+#     # Define the prompt
+#     generator = pipeline('text-generation', model='gpt2', device=-1)
 
-    prompt = "Once upon a time in a far away land,"
+#     prompt = "Once upon a time in a far away land,"
 
-    # Generate text using the pipeline
-    generated_text = generator(prompt, max_length=100, num_return_sequences=1)[0]['generated_text']
+#     # Generate text using the pipeline
+#     generated_text = generator(prompt, max_length=100, num_return_sequences=1)[0]['generated_text']
 
-    # Return the generated text as the response
-    return jsonify({'generated_text': generated_text})
+#     # Return the generated text as the response
+#     return jsonify({'generated_text': generated_text})
 
 
 @app.route("/solve_question/<int:question_id>", methods=['GET', 'POST'])
@@ -164,23 +164,23 @@ def solve_question(question_id):
     return render_template('solve_question.html', question=question)
 
 
-@app.route('/compile', methods=['POST'])
-def compile_code():
-    code = request.form['code']
-    try:
-        # Secure execution using a temporary file
-        with tempfile.NamedTemporaryFile(mode='w+', delete=False) as f:
-            f.write(code)
-            f.flush()
-            output = subprocess.run(
-                ['python', f.name], capture_output=True, text=True, timeout=5)
-        os.remove(f.name)  # Ensure the file is removed after execution
-        if output.returncode == 0:
-            return output.stdout
-        else:
-            return f"Error in execution: {output.stderr}"
-    except Exception as e:
-        return f"Server error: {str(e)}", 500
+# @app.route('/compile', methods=['POST'])
+# def compile_code():
+#     code = request.form['code']
+#     try:
+#         # Secure execution using a temporary file
+#         with tempfile.NamedTemporaryFile(mode='w+', delete=False) as f:
+#             f.write(code)
+#             f.flush()
+#             output = subprocess.run(
+#                 ['python', f.name], capture_output=True, text=True, timeout=5)
+#         os.remove(f.name)  # Ensure the file is removed after execution
+#         if output.returncode == 0:
+#             return output.stdout
+#         else:
+#             return f"Error in execution: {output.stderr}"
+#     except Exception as e:
+#         return f"Server error: {str(e)}", 500
 
 
 def generate_response(prompt_input, email, passwd):
