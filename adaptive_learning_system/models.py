@@ -26,3 +26,10 @@ class ProgrammingQuestion(db.Model):
     description = db.Column(db.Text, nullable=False)
     difficulty = db.Column(db.String(10), nullable=False)
     language = db.Column(db.String(20), nullable=False)
+
+
+class Submission(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('programming_question.id'), nullable=False)
+    code = db.Column(db.Text, nullable=False)
